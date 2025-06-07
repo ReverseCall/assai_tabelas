@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-myyt!*_ffr_5%nlp45@w()8khjvz(v_!q@c^y0t=lv0c_b2e)o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*", "assai-project.onrender.com"]
+ALLOWED_HOSTS = ["*", "assai-tabelas.onrender.com"]
 
 
 # Application definition
