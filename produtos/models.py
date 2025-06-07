@@ -1,12 +1,12 @@
+from django.core.files.base import ContentFile, File
+from barcode.writer import ImageWriter
+from barcode import get_barcode_class
+from django.conf import settings
 from django.db import models
 from io import BytesIO
-from django.core.files.base import ContentFile, File
-from django.conf import settings
-from barcode import get_barcode_class
-from barcode.writer import ImageWriter
 from PIL import Image
-import os
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,7 @@ class Produto(models.Model):
         ('carnes', 'Carnes'),
         ('verduras', 'Verduras')
     ]
+
 
     FORMATOS = [
         ('code128', 'Code 128'),
@@ -34,10 +35,11 @@ class Produto(models.Model):
         ('codabar', 'Codabar'),
     ]
 
+
     nome = models.CharField(max_length=100)
     categoria = models.CharField(max_length=20, choices=CATEGORIAS)
     imagem = models.ImageField(upload_to='produtos/', blank=True)
-    codigo = models.CharField(max_length=100, blank=True)
+    codigo = models.CharField(max_length=100, blank=False)
     formato = models.CharField(max_length=20, choices=FORMATOS, default="code128")
     barcode_image = models.ImageField(upload_to='barcodes/', blank=True, null=True)
 
@@ -54,10 +56,17 @@ class Produto(models.Model):
         if self.imagem and hasattr(self.imagem, 'file') and not self.imagem.name.endswith('.webp'):
             try:
                 img = Image.open(self.imagem)
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
+
+                if img.mode not in ('RGB', 'RGBA'):
+                    img = img.convert('RGBA' if 'A' in img.getbands() else 'RGB')
+
                 buffer = BytesIO()
-                img.save(buffer, format='WEBP', quality=80)
+
+                if img.mode == 'RGBA':
+                    img.save(buffer, format='WEBP', lossless=True)
+                else:
+                    img.save(buffer, format='WEBP', quality=80)
+
                 buffer.seek(0)
 
                 filename_webp = f"{nome_slug}_{formato_slug}.webp"
@@ -77,7 +86,6 @@ class Produto(models.Model):
                 except Exception as e:
                     logger.error(f"Erro ao carregar imagem padrão para '{self.nome}': {e}")
 
-        # Salva o objeto com a imagem final (webp ou padrão)
         super().save(*args, **kwargs)
 
         # === Geração do código de barras ===
