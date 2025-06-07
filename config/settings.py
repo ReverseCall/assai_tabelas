@@ -145,7 +145,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://assai-tabelas.onrender.com/",
+    "https://assai-tabelas.onrender.com",
 ]
 
 # Default primary key field type
