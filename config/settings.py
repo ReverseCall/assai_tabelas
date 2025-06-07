@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-myyt!*_ffr_5%nlp45@w()8khjvz(v_!q@c^y0t=lv0c_b2e)o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*", "assai-tabelas.onrender.com"]
+ALLOWED_HOSTS = ["*", "https://assai-tabelas.onrender.com/", "assai-tabelas.onrender.com"]
 
 
 # Application definition
@@ -145,7 +145,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://assai-tabelas.onrender.com",
+    "https://assai-tabelas.onrender.com/",
 ]
 
 # Default primary key field type
