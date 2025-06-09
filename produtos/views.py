@@ -5,7 +5,7 @@ from datetime import date
 
 # Create your views here.
 
-def lista_produtos(request):
+def home(request):
     produtos = Produto.objects.all()
     paginator = Paginator(produtos, 10)  # 10 itens por página
     page_number = request.GET.get('page')
