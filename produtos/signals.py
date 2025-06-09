@@ -1,6 +1,8 @@
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 from .models import Produto
+import os
+import shutil
 
 @receiver(post_delete, sender=Produto)
 def deletar_arquivos_produto(sender, instance, **kwargs):

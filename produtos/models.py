@@ -11,12 +11,10 @@ import os
 logger = logging.getLogger(__name__)
 
 class Produto(models.Model):
-
     CATEGORIAS = [
         ('carnes', 'Carnes'),
         ('verduras', 'Verduras')
     ]
-
 
     FORMATOS = [
         ('code128', 'Code 128'),
@@ -35,7 +33,6 @@ class Produto(models.Model):
         ('codabar', 'Codabar'),
     ]
 
-
     nome = models.CharField(max_length=100)
     categoria = models.CharField(max_length=20, choices=CATEGORIAS)
     imagem = models.ImageField(upload_to='produtos/', blank=True)
@@ -43,68 +40,84 @@ class Produto(models.Model):
     formato = models.CharField(max_length=20, choices=FORMATOS, default="code128")
     barcode_image = models.ImageField(upload_to='barcodes/', blank=True, null=True)
 
-
     def __str__(self):
         return self.nome
-    
 
     def save(self, *args, **kwargs):
         nome_slug = self.nome.lower().replace(" ", "_")
         formato_slug = self.formato.lower()
+        filename_img = f"{nome_slug}_{formato_slug}.webp"
+        filename_barcode = f"{nome_slug}_{formato_slug}.png"
 
-        # === Converte imagem enviada para WEBP ===
+        # Verifica se é update (já existe no banco)
+        if self.pk:
+            old = Produto.objects.filter(pk=self.pk).first()
+            if old:
+                old_nome_slug = old.nome.lower().replace(" ", "_")
+                old_formato_slug = old.formato.lower()
+                old_filename_img = f"{old_nome_slug}_{old_formato_slug}.webp"
+                old_filename_barcode = f"{old_nome_slug}_{old_formato_slug}.png"
+
+                # === Renomeia imagem se nome ou formato mudou ===
+                if (old.nome != self.nome or old.formato != self.formato) and old.imagem:
+                    old_img_path = os.path.join(settings.MEDIA_ROOT, 'produtos', old_filename_img)
+                    new_img_path = os.path.join(settings.MEDIA_ROOT, 'produtos', filename_img)
+
+                    if os.path.exists(old_img_path) and not os.path.exists(new_img_path):
+                        os.rename(old_img_path, new_img_path)
+                        self.imagem.name = os.path.join('produtos', filename_img)
+
+                # === Renomeia código de barras se necessário ===
+                if (old.nome != self.nome or old.formato != self.formato) and old.barcode_image:
+                    old_barcode_path = os.path.join(settings.MEDIA_ROOT, 'barcodes', old_filename_barcode)
+                    new_barcode_path = os.path.join(settings.MEDIA_ROOT, 'barcodes', filename_barcode)
+
+                    if os.path.exists(old_barcode_path) and not os.path.exists(new_barcode_path):
+                        os.rename(old_barcode_path, new_barcode_path)
+                        self.barcode_image.name = os.path.join('barcodes', filename_barcode)
+
+        # === Converter imagem enviada para WEBP ===
         if self.imagem and hasattr(self.imagem, 'file') and not self.imagem.name.endswith('.webp'):
             try:
                 img = Image.open(self.imagem)
-
                 if img.mode not in ('RGB', 'RGBA'):
                     img = img.convert('RGBA' if 'A' in img.getbands() else 'RGB')
 
                 buffer = BytesIO()
-
                 if img.mode == 'RGBA':
                     img.save(buffer, format='WEBP', lossless=True)
                 else:
                     img.save(buffer, format='WEBP', quality=80)
 
                 buffer.seek(0)
-
-                filename_webp = f"{nome_slug}_{formato_slug}.webp"
-                self.imagem = ContentFile(buffer.getvalue(), name=filename_webp)
-
+                self.imagem = ContentFile(buffer.getvalue(), name=filename_img)
             except Exception as e:
-                logger.error(f"Erro ao converter imagem de '{self.nome}': {e}")
+                logger.error(f"Erro ao converter imagem: {e}")
 
-        # === Usa imagem padrão sem conversão se nenhuma imagem foi enviada ===
+        # === Imagem padrão se nenhuma enviada ===
         if not self.imagem:
             default_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'default_img.png')
             if os.path.exists(default_path):
-                try:
-                    with open(default_path, 'rb') as f:
-                        filename = f"{nome_slug}_{formato_slug}.png"
-                        self.imagem.save(filename, File(f), save=False)
-                except Exception as e:
-                    logger.error(f"Erro ao carregar imagem padrão para '{self.nome}': {e}")
+                with open(default_path, 'rb') as f:
+                    self.imagem.save(filename_img, File(f), save=False)
 
+        # Primeiro salva com imagem (convertida ou padrão)
         super().save(*args, **kwargs)
 
-        # === Geração do código de barras ===
+        # === Gerar código de barras ===
+        barcode_path = os.path.join(settings.MEDIA_ROOT, 'barcodes', filename_barcode)
         if self.codigo:
-            filename_barcode = f"{nome_slug}_{formato_slug}.png"
-            needs_gen = not self.barcode_image or settings.DEBUG
-
-            if needs_gen:
+            if not os.path.exists(barcode_path):
                 try:
                     barcode_class = get_barcode_class(self.formato)
                     barcode_obj = barcode_class(self.codigo, writer=ImageWriter())
                     buffer = BytesIO()
                     barcode_obj.write(buffer)
                     buffer.seek(0)
-
                     self.barcode_image.save(filename_barcode, ContentFile(buffer.getvalue()), save=False)
                     super().save(update_fields=['barcode_image'])
                 except Exception as e:
-                    logger.error(f"Erro ao gerar código de barras para '{self.nome}': {e}")
-        else:
-            if self.barcode_image:
-                self.barcode_image.delete(save=False)
+                    logger.error(f"Erro ao gerar código de barras: {e}")
+            else:
+                self.barcode_image.name = os.path.join('barcodes', filename_barcode)
+                super().save(update_fields=['barcode_image'])

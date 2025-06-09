@@ -17,3 +17,12 @@ def imprimir_produtos(request):
     produtos = Produto.objects.all()
     data_atual = date.today()
     return render(request, 'imprimir.html', {'produtos': produtos, 'data': data_atual})
+
+
+def lista_produtos(request):
+    produtos = Produto.objects.all()
+    modo_tabela = False  # ou pegue isso do request se quiser persistência via GET
+    return render(request, 'lista_produtos.html', {
+        'produtos': produtos,
+        'modo_tabela': modo_tabela,
+    })
