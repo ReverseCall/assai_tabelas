@@ -76,7 +76,7 @@ class Produto(models.Model):
                         os.rename(old_barcode_path, new_barcode_path)
                         self.barcode_image.name = os.path.join('barcodes', filename_barcode)
 
-        # === Converter imagem enviada para WEBP ===
+        # === Converter imagem para WEBP ===
         if self.imagem and hasattr(self.imagem, 'file') and not self.imagem.name.endswith('.webp'):
             try:
                 img = Image.open(self.imagem)
@@ -101,7 +101,6 @@ class Produto(models.Model):
                 with open(default_path, 'rb') as f:
                     self.imagem.save(filename_img, File(f), save=False)
 
-        # Primeiro salva com imagem (convertida ou padrão)
         super().save(*args, **kwargs)
 
         # === Gerar código de barras ===

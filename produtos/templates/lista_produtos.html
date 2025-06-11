@@ -1,111 +1,167 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <title>Lista de Produtos</title>
     <style>
-        .view-mode { margin-bottom: 20px; }
-        .hidden { display: none; }
-        .produto-img { width: 150px; height: auto; margin: 10px; display: inline-block; text-align: center; }
-        .produto-img img { width: 100%; height: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+        .view-mode {
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .produto-img {
+            width: 150px;
+            height: auto;
+            margin: 10px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .produto-img img {
+            width: 100%;
+            height: auto;
+        }
+
+        .tabela-container {
+            max-width: 100%;
+            width: fit-content;
+            text-align: left;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: auto;
+            max-width: 100%;
+            table-layout: auto;
+        }
+
+        th, td {
+            width: 120px;
+            height: 7px;
+            vertical-align: middle;
+            border: 1px solid #ccc;
+        }
+
+        #codigo-tabela{
+            width: 50px;
+        }
+
     </style>
 </head>
+
 <body>
 
     <div class="view-mode">
-    <label>
-        <input type="checkbox" id="toggleView" {% if modo_tabela %}checked{% endif %}> Mostrar como tabela
-    </label>
-    <label>
-        <input type="checkbox" id="toggleCarnes" checked> Mostrar carnes
-    </label>
-    <label>
-        <input type="checkbox" id="toggleVerduras" checked> Mostrar verduras
-    </label>
-</div>
+        <label>
+            <input type="checkbox" id="toggleView" {% if modo_tabela %}checked{% endif %}> Mostrar como tabela
+        </label>
+        <label>
+            <input type="checkbox" id="toggleCarnes" checked> Mostrar carnes
+        </label>
+        <label>
+            <input type="checkbox" id="toggleVerduras" checked> Mostrar verduras
+        </label>
+    </div>
 
 
     <!-- Visual (Imagens) -->
     <div id="view-imagem" class="{% if modo_tabela %}hidden{% endif %}">
-    {% for produto in produtos %}
+        {% for produto in produtos %}
         <div class="produto-img categoria-{{ produto.categoria }}">
             <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
             <p><strong>{{ produto.nome }}</strong></p>
 
             {% if produto.barcode_image %}
-                <img src="{{ produto.barcode_image.url }}" alt="Código de barras de {{ produto.nome }}" style="height: 90px; margin-top: 5px; object-fit: contain;">
+            <img src="{{ produto.barcode_image.url }}" alt="Código de barras de {{ produto.nome }}"
+                style="height: 90px; margin-top: 5px; object-fit: contain;">
             {% else %}
-                <p><em>Sem código de barras</em></p>
+            <p><em>Sem código de barras</em></p>
             {% endif %}
         </div>
-    {% empty %}
+        {% empty %}
         <p>Nenhum produto encontrado.</p>
-    {% endfor %}
-</div>
+        {% endfor %}
+    </div>
 
 
     <!-- Tabela -->
     <div id="view-tabela" class="{% if not modo_tabela %}hidden{% endif %}">
-    <table>
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Código</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for produto in produtos %}
-            <tr class="categoria-{{ produto.categoria }}">
-                <td>{{ produto.nome }}</td>
-                <td>{{ produto.codigo }}</td>
-            </tr>
-            {% empty %}
-                <tr><td colspan="2">Nenhum produto encontrado.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+        <div class="tabela-container" style="width: {{ largura_tabela }};">
+            <table>
+            <thead>
+                <tr>
+                    {% for coluna in colunas %}
+                    <th>Nome</th>
+                    <th id="codigo-tabela">Código</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in linhas %}
+                <tr>
+                    {% for coluna in colunas %}
+                    {% if coluna|length > i %}
+                    {% with item=coluna|slice:"%d:|add:i"|first %}
+                    <td>{{ item.nome }}</td>
+                    <td id="codigo-tabela">{{ item.codigo }}</td>
+                    {% endwith %}
+                    {% else %}
+                    <td></td>
+                    <td></td>
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+        </div>
+    </div>
+
 
 
     <script>
-    const toggle = document.getElementById("toggleView");
-    const viewImagem = document.getElementById("view-imagem");
-    const viewTabela = document.getElementById("view-tabela");
+        const toggle = document.getElementById("toggleView");
+        const viewImagem = document.getElementById("view-imagem");
+        const viewTabela = document.getElementById("view-tabela");
 
-    const toggleCarnes = document.getElementById("toggleCarnes");
-    const toggleVerduras = document.getElementById("toggleVerduras");
+        const toggleCarnes = document.getElementById("toggleCarnes");
+        const toggleVerduras = document.getElementById("toggleVerduras");
 
-    function updateCategoriaVisibility() {
-        const mostrarCarnes = toggleCarnes.checked;
-        const mostrarVerduras = toggleVerduras.checked;
+        function updateCategoriaVisibility() {
+            const mostrarCarnes = toggleCarnes.checked;
+            const mostrarVerduras = toggleVerduras.checked;
 
-        document.querySelectorAll(".categoria-carnes").forEach(el => {
-            el.style.display = mostrarCarnes ? "" : "none";
-        });
-        document.querySelectorAll(".categoria-verduras").forEach(el => {
-            el.style.display = mostrarVerduras ? "" : "none";
-        });
-    }
-
-    toggle.addEventListener("change", function () {
-        if (this.checked) {
-            viewImagem.classList.add("hidden");
-            viewTabela.classList.remove("hidden");
-        } else {
-            viewTabela.classList.add("hidden");
-            viewImagem.classList.remove("hidden");
+            document.querySelectorAll(".categoria-carnes").forEach(el => {
+                el.style.display = mostrarCarnes ? "" : "none";
+            });
+            document.querySelectorAll(".categoria-verduras").forEach(el => {
+                el.style.display = mostrarVerduras ? "" : "none";
+            });
         }
-        updateCategoriaVisibility(); // Atualiza quando muda de modo
-    });
 
-    toggleCarnes.addEventListener("change", updateCategoriaVisibility);
-    toggleVerduras.addEventListener("change", updateCategoriaVisibility);
+        toggle.addEventListener("change", function () {
+            if (this.checked) {
+                viewImagem.classList.add("hidden");
+                viewTabela.classList.remove("hidden");
+            } else {
+                viewTabela.classList.add("hidden");
+                viewImagem.classList.remove("hidden");
+            }
+            updateCategoriaVisibility(); // Atualiza quando muda de modo
+        });
 
-    // Atualiza ao carregar a página
-    updateCategoriaVisibility();
-</script>
+        toggleCarnes.addEventListener("change", updateCategoriaVisibility);
+        toggleVerduras.addEventListener("change", updateCategoriaVisibility);
+
+        // Atualiza ao carregar a página
+        updateCategoriaVisibility();
+    </script>
 
 </body>
+
 </html>

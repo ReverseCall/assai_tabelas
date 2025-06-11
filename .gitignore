@@ -2,3 +2,4 @@ venv
 .env
 staticfiles
 db.sqlite3
+media
