@@ -31,7 +31,14 @@ SECRET_KEY = 'django-insecure-myyt!*_ffr_5%nlp45@w()8khjvz(v_!q@c^y0t=lv0c_b2e)o
 DEBUG = True
 USE_DEV_DB = False
 
-ALLOWED_HOSTS = ["ReverseCall.pythonanywhere.com", "*"]
+if USE_DEV_DB:
+    ALLOWED_HOSTS_LIST = ["*"]
+    CSRF_TRUSTED_ORIGINS_LIST = ["http://127.0.0.1:8000"]
+else:
+    ALLOWED_HOSTS_LIST = ["ReverseCall.pythonanywhere.com"]
+    CSRF_TRUSTED_ORIGINS_LIST = ["https://ReverseCall.pythonanywhere.com"]
+
+ALLOWED_HOSTS = ALLOWED_HOSTS_LIST
 
 
 # Application definition
@@ -88,7 +95,7 @@ if USE_DEV_DB:
         }
     }
 else:
-        DATABASES = {
+    DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.mysql',
                 'NAME': 'ReverseCall$default',
@@ -144,10 +151,7 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
-CSRF_TRUSTED_ORIGINS = [
-    
-    "https://ReverseCall.pythonanywhere.com",
-]
+CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS_LIST
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
