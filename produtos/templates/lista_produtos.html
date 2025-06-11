@@ -1,3 +1,5 @@
+{% load utils %}
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -39,17 +41,17 @@
             table-layout: auto;
         }
 
-        th, td {
+        th,
+        td {
             width: 120px;
             height: 7px;
             vertical-align: middle;
             border: 1px solid #ccc;
         }
 
-        #codigo-tabela{
+        #codigo-tabela {
             width: 50px;
         }
-
     </style>
 </head>
 
@@ -92,33 +94,34 @@
     <div id="view-tabela" class="{% if not modo_tabela %}hidden{% endif %}">
         <div class="tabela-container" style="width: {{ largura_tabela }};">
             <table>
-            <thead>
-                <tr>
-                    {% for coluna in colunas %}
-                    <th>Nome</th>
-                    <th id="codigo-tabela">Código</th>
+                <thead>
+                    <tr>
+                        {% for coluna in colunas %}
+                        <th>Nome</th>
+                        <th id="codigo-tabela">Código</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in linhas %}
+                    <tr>
+                        {% for coluna in colunas %}
+                        {% if coluna|length > i %}
+                        {% with item=coluna|get_item:i %}
+                        <td>{{ item.nome }}</td>
+                        <td id="codigo-tabela">{{ item.codigo }}</td>
+                        {% endwith %}
+                        {% else %}
+                        <td></td>
+                        <td></td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
                     {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in linhas %}
-                <tr>
-                    {% for coluna in colunas %}
-                    {% if coluna|length > i %}
-                    {% with item=coluna|slice:"%d:|add:i"|first %}
-                    <td>{{ item.nome }}</td>
-                    <td id="codigo-tabela">{{ item.codigo }}</td>
-                    {% endwith %}
-                    {% else %}
-                    <td></td>
-                    <td></td>
-                    {% endif %}
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
+                </tbody>
 
-        </table>
+
+            </table>
         </div>
     </div>
 

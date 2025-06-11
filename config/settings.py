@@ -29,6 +29,7 @@ SECRET_KEY = 'django-insecure-myyt!*_ffr_5%nlp45@w()8khjvz(v_!q@c^y0t=lv0c_b2e)o
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+USE_DEV_DB = False
 
 ALLOWED_HOSTS = ["ReverseCall.pythonanywhere.com", "*"]
 
@@ -78,36 +79,25 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if USE_DEV_DB:
+    # SQLite (desenvolvimento)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
-
-#tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': tmpPostgres.path.replace('/', ''),
-#        'USER': tmpPostgres.username,
-#        'PASSWORD': tmpPostgres.password,
-#        'HOST': tmpPostgres.hostname,
-#        'PORT': 5432,
-#    }
-#}
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.mysql',
-#        'NAME': 'ReverseCall$default',
-#        'USER': 'ReverseCall',
-#        'PASSWORD': '5248679Re!',
-#        'HOST': 'ReverseCall.mysql.pythonanywhere-services.com',
-#        'PORT': '3306',
-#    }
-#}
+else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': 'ReverseCall$default',
+                'USER': 'ReverseCall',
+                'PASSWORD': '5248679Re!',
+                'HOST': 'ReverseCall.mysql.pythonanywhere-services.com',
+                'PORT': '3306',
+            }
+        }
 
 
 # Password validation
