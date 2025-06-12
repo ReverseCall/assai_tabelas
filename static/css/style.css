@@ -15,7 +15,7 @@
 /* Impressão em A4 (5 colunas) */
 .print-container {
   display: grid;
-  grid-template-columns: repeat(7, 1Fr);
+  grid-template-columns: repeat(5, 1Fr);
 
 }
 .print-item {
