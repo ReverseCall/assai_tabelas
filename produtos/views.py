@@ -37,7 +37,6 @@ def lista_produtos(request):
     if num_pares % 4 == 0:
         largura_tabela = "100%"
     else:
-        # Exemplo: cada coluna vale 25% — ajuste conforme necessário
         largura_percentual = min(100, num_pares * 25)
         largura_tabela = f"{largura_percentual}%"
 
