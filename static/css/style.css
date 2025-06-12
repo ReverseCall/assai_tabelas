@@ -15,7 +15,7 @@
 /* Impressão em A4 (5 colunas) */
 .print-container {
   display: grid;
-  grid-template-columns: repeat(5, 1Fr);
+  grid-template-columns: repeat(7, 1Fr);
 
 }
 .print-item {
@@ -24,9 +24,8 @@
   text-align: center;
   display: flex;
   flex-direction: column;
-  max-height: 150px;
-  /* Ajuste modular de altura/largura, se necessário */
-  /* width: 120px; height: 180px; */
+  max-height: 120px;
+  max-width: 120px;
 }
 
 #image-produto {
@@ -34,18 +33,14 @@
 }
 
 #bar-code {
-  height: 50%;
-  width: auto;
-  object-fit: contain;
+  height: 37%;
+  width: 100%;
+  object-fit: cover;
+  transform: scale(1.01);
 }
 
 #texto {
   display: none;
-}
-
-/* Quebra de página a cada 20 itens */
-.page-break {
-  page-break-after: always;
 }
 
 /* Ajustes somente para impressão */
