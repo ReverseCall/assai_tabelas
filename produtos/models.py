@@ -4,7 +4,7 @@ from barcode import get_barcode_class
 from django.conf import settings
 from django.db import models
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageOps
 import logging
 import os
 
@@ -62,7 +62,6 @@ class Produto(models.Model):
                 if (old.nome != self.nome or old.formato != self.formato) and old.imagem:
                     old_img_path = os.path.join(settings.MEDIA_ROOT, 'produtos', old_filename_img)
                     new_img_path = os.path.join(settings.MEDIA_ROOT, 'produtos', filename_img)
-
                     if os.path.exists(old_img_path) and not os.path.exists(new_img_path):
                         os.rename(old_img_path, new_img_path)
                         self.imagem.name = os.path.join('produtos', filename_img)
@@ -71,24 +70,21 @@ class Produto(models.Model):
                 if (old.nome != self.nome or old.formato != self.formato) and old.barcode_image:
                     old_barcode_path = os.path.join(settings.MEDIA_ROOT, 'barcodes', old_filename_barcode)
                     new_barcode_path = os.path.join(settings.MEDIA_ROOT, 'barcodes', filename_barcode)
-
                     if os.path.exists(old_barcode_path) and not os.path.exists(new_barcode_path):
                         os.rename(old_barcode_path, new_barcode_path)
                         self.barcode_image.name = os.path.join('barcodes', filename_barcode)
 
-        # === Converter imagem para WEBP ===
+        ## === Converter imagem para WEBP ===
         if self.imagem and hasattr(self.imagem, 'file') and not self.imagem.name.endswith('.webp'):
             try:
                 img = Image.open(self.imagem)
                 if img.mode not in ('RGB', 'RGBA'):
                     img = img.convert('RGBA' if 'A' in img.getbands() else 'RGB')
-
                 buffer = BytesIO()
                 if img.mode == 'RGBA':
                     img.save(buffer, format='WEBP', lossless=True)
                 else:
                     img.save(buffer, format='WEBP', quality=80)
-
                 buffer.seek(0)
                 self.imagem = ContentFile(buffer.getvalue(), name=filename_img)
             except Exception as e:
@@ -109,14 +105,42 @@ class Produto(models.Model):
             if not os.path.exists(barcode_path):
                 try:
                     barcode_class = get_barcode_class(self.formato)
+
+                    # Aumentar o espaçamento entre barras: module_width
+                    options = {
+                        'write_text': False,
+                        'module_height': 35.0,     # altura das barras
+                        'module_width': 1.0,       # largura de cada barra (↑ → mais espaçamento)
+                        'quiet_zone': 2.0,         # margem lateral
+                        'font_size': 0,
+                        'text_distance': 0,
+                        'dpi': 300,
+                    }
+
                     barcode_obj = barcode_class(self.codigo, writer=ImageWriter())
                     buffer = BytesIO()
-                    barcode_obj.write(buffer)
+                    barcode_obj.write(buffer, options=options)
                     buffer.seek(0)
-                    self.barcode_image.save(filename_barcode, ContentFile(buffer.getvalue()), save=False)
+
+                    # Centraliza a imagem sem distorcer proporções
+                    original = Image.open(buffer)
+                    target_size = (600, 300)
+                    barcode_fitted = ImageOps.contain(original, target_size, method=Image.LANCZOS)
+
+                    final_img = Image.new("RGB", target_size, "white")
+                    x = (target_size[0] - barcode_fitted.width) // 2
+                    y = (target_size[1] - barcode_fitted.height) // 2
+                    final_img.paste(barcode_fitted, (x, y))
+
+                    output = BytesIO()
+                    final_img.save(output, format="PNG")
+                    output.seek(0)
+
+                    self.barcode_image.save(filename_barcode, ContentFile(output.getvalue()), save=False)
                     super().save(update_fields=['barcode_image'])
                 except Exception as e:
                     logger.error(f"Erro ao gerar código de barras: {e}")
             else:
                 self.barcode_image.name = os.path.join('barcodes', filename_barcode)
                 super().save(update_fields=['barcode_image'])
+                
