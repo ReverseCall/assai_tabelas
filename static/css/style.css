@@ -35,7 +35,7 @@
 #bar-code {
   height: 37%;
   width: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transform: scale(1.01);
 }
 
